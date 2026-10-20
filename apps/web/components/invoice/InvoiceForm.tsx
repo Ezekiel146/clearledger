@@ -8,6 +8,7 @@ import type { AssetType } from "@/types";
 import { ASSET_OPTIONS } from "@/lib/assets";
 import { AmountInput } from "@/components/shared/AmountInput";
 import { useWalletStore } from "@/store/wallet";
+import { useProfile } from "@/hooks/useProfile";
 import { DatePicker } from "@/components/ui/date-picker";
 import { getErrorMessage } from "@/lib/errors";
 
@@ -43,6 +44,8 @@ async function cancelCreatedInvoice(invoiceId: string) {
 export function InvoiceForm({ onSuccess }: InvoiceFormProps) {
   const { createInvoice, isCreating, listInvoice } = useInvoiceActions();
   const address = useWalletStore((s) => s.address);
+  const { profile, isProfileLoading, isVerified } = useProfile();
+  const isIssuerReady = profile?.role === "issuer" && isVerified;
 
   const [buyer, setBuyer] = useState("");
   const [faceValue, setFaceValue] = useState("");
@@ -70,6 +73,11 @@ export function InvoiceForm({ onSuccess }: InvoiceFormProps) {
   const handleNextStep = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
+
+    if (!isIssuerReady) {
+      setError("Register and verify this wallet as an issuer before creating an invoice.");
+      return;
+    }
 
     const trimmedBuyer = buyer.trim();
     const { StrKey } = await getStellarSdk();
@@ -251,6 +259,26 @@ export function InvoiceForm({ onSuccess }: InvoiceFormProps) {
 
       {step === 1 ? (
         <form onSubmit={handleNextStep} className="space-y-4">
+          <div
+            role="status"
+            aria-live="polite"
+            className="rounded border border-border bg-[#080c10] px-3 py-2 text-xs font-mono"
+          >
+            <span className="text-slate-400">Issuer readiness: </span>
+            {isProfileLoading ? (
+              <span className="text-slate-300">Checking registry…</span>
+            ) : isIssuerReady ? (
+              <span className="text-emerald-400">Registered and verified</span>
+            ) : (
+              <span className="text-amber-400">
+                {profile?.role === "issuer"
+                  ? "Registered, verification pending"
+                  : profile?.role === "buyer"
+                    ? "This wallet is registered as a buyer"
+                    : "This wallet is not registered as an issuer"}
+              </span>
+            )}
+          </div>
           <div className="space-y-1">
             <label className="block text-[10px] font-bold font-mono text-slate-500 uppercase tracking-wider">
               Buyer Wallet Address
