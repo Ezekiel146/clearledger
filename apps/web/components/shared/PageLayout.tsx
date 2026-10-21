@@ -1,6 +1,7 @@
 import React from "react";
 import { Navbar } from "./Navbar";
 import { XlmFeeGuidance } from "./XlmFeeGuidance";
+import { TestnetOnlyBanner } from "./TestnetOnlyBanner";
 
 interface PageLayoutProps {
   children: React.ReactNode;
@@ -14,6 +15,7 @@ export function PageLayout({ children }: PageLayoutProps) {
 
       <Navbar />
       <XlmFeeGuidance />
+      <TestnetOnlyBanner />
 
       <main
         id="main-content"
